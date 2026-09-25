@@ -1,0 +1,59 @@
+# Binaries
+bin/
+tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go workspace
+go.work
+go.work.sum
+
+# Dependency directories
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Docker volumes
+kafka-data/
+postgres-*/
+redis-data/
+
+# Logs
+*.log
+logs/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Air temp files
+services/*/tmp/
+
+# Build artifacts
+dist/
+build/
+
+# Coverage
+coverage.txt
+coverage.html
+*.cover
+
+# Debug
+debug
+debug.test
