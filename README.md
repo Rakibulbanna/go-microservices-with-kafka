@@ -806,7 +806,7 @@ kafka-practice/
 | Replication / ISR | Multi-broker cluster concepts |
 | Security (TLS/SASL) | Authentication and authorization |
 
----
+<!-- ---
 
 ## Interview Questions
 
@@ -826,7 +826,7 @@ Based on this project, you should be able to answer:
 12. **What is the difference between Kafka headers and payload?**
 13. **Explain Kafka's KRaft mode vs ZooKeeper.**
 14. **What is rebalancing and when does it occur?**
-15. **How do you ensure exactly-once processing across Kafka and a database?**
+15. **How do you ensure exactly-once processing across Kafka and a database?** -->
 
 ---
 
