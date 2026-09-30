@@ -61,6 +61,18 @@ cluster-up:
 cluster-down:
 	docker compose -f docker-compose.cluster.yml down
 
+cluster-topics:
+	docker exec kafka-broker-1 /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+
+cluster-topic-describe:
+	docker exec kafka-broker-1 /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic $(TOPIC)
+
+cluster-consumer-groups:
+	docker exec kafka-broker-1 /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --list
+
+cluster-consumer-group-describe:
+	docker exec kafka-broker-1 /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group $(GROUP)
+
 order-test:
 	cd services/order-service && go test -v ./...
 
