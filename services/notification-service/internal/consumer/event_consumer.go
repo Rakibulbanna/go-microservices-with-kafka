@@ -3,12 +3,14 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"time"
 
 	kafkago "github.com/segmentio/kafka-go"
 
 	"github.com/banna/kafka-microservices/pkg/events"
+	"github.com/banna/kafka-microservices/pkg/observability"
 	"github.com/banna/kafka-microservices/services/notification-service/internal/config"
 	"github.com/banna/kafka-microservices/services/notification-service/internal/service"
 )
@@ -56,13 +58,14 @@ func (c *EventConsumer) Start(ctx context.Context) {
 				continue
 			}
 
-			c.logger.Info("message received",
-				slog.String("topic", msg.Topic),
-				slog.Int("partition", msg.Partition),
-				slog.Int64("offset", msg.Offset),
-				slog.String("key", string(msg.Key)),
-				slog.String("group", c.reader.Config().GroupID),
-			)
+		observability.PrintStep("CONSUME", "notification-service", "message_received",
+			"topic", msg.Topic,
+			"partition", fmt.Sprintf("%d", msg.Partition),
+			"offset", fmt.Sprintf("%d", msg.Offset),
+			"key", string(msg.Key),
+			"group", c.reader.Config().GroupID,
+			"flow", msg.Topic+" → notification-service",
+		)
 
 			if c.cfg.SlowConsumer {
 				c.logger.Info("slow consumer mode - simulating delay",
@@ -86,13 +89,14 @@ func (c *EventConsumer) Start(ctx context.Context) {
 					slog.String("error", err.Error()),
 					slog.Int64("offset", msg.Offset),
 				)
-			} else {
-				c.logger.Info("offset committed",
-					slog.String("topic", msg.Topic),
-					slog.Int("partition", msg.Partition),
-					slog.Int64("offset", msg.Offset),
-				)
-			}
+		} else {
+			observability.PrintStep("CONSUME", "notification-service", "offset_committed",
+				"topic", msg.Topic,
+				"partition", fmt.Sprintf("%d", msg.Partition),
+				"offset", fmt.Sprintf("%d", msg.Offset),
+				"status", "SUCCESS",
+			)
+		}
 		}
 	}
 }
@@ -107,10 +111,10 @@ func (c *EventConsumer) handleMessage(ctx context.Context, msg kafkago.Message) 
 	eventID := c.getHeader(msg, "event_id")
 	correlationID := c.getHeader(msg, "correlation_id")
 
-	c.logger.Info("processing event",
-		slog.String("event_type", envelope.EventType),
-		slog.String("event_id", eventID),
-		slog.String("correlation_id", correlationID),
+	observability.PrintStep("PROCESS", "notification-service", "processing_event",
+		"event_type", envelope.EventType,
+		"event_id", eventID,
+		"correlation_id", correlationID,
 	)
 
 	switch envelope.EventType {

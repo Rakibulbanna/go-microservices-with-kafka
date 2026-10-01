@@ -12,16 +12,17 @@ import (
 
 	"github.com/banna/kafka-microservices/pkg/events"
 	kafkapkg "github.com/banna/kafka-microservices/pkg/kafka"
+	"github.com/banna/kafka-microservices/pkg/observability"
 	"github.com/banna/kafka-microservices/services/payment-service/internal/config"
 	"github.com/banna/kafka-microservices/services/payment-service/internal/service"
 )
 
 type OrderConsumer struct {
-	reader        *kafkago.Reader
-	writer        *kafkago.Writer
-	paymentSvc    *service.PaymentService
-	logger        *slog.Logger
-	cfg           config.Config
+	reader     *kafkago.Reader
+	writer     *kafkago.Writer
+	paymentSvc *service.PaymentService
+	logger     *slog.Logger
+	cfg        config.Config
 }
 
 func NewOrderConsumer(
@@ -87,10 +88,11 @@ func (c *OrderConsumer) Start(ctx context.Context) {
 					slog.Int64("offset", msg.Offset),
 				)
 			} else {
-				c.logger.Info("offset committed",
-					slog.String("topic", msg.Topic),
-					slog.Int("partition", msg.Partition),
-					slog.Int64("offset", msg.Offset),
+				observability.PrintStep("CONSUME", "payment-service", "offset_committed",
+					"topic", msg.Topic,
+					"partition", fmt.Sprintf("%d", msg.Partition),
+					"offset", fmt.Sprintf("%d", msg.Offset),
+					"status", "SUCCESS",
 				)
 			}
 		}
@@ -109,11 +111,11 @@ func (c *OrderConsumer) handleMessage(ctx context.Context, msg kafkago.Message) 
 	correlationID := c.getHeader(msg, "correlation_id")
 	retryCount := c.getRetryCount(msg)
 
-	c.logger.Info("processing event",
-		slog.String("event_type", eventType),
-		slog.String("event_id", eventID),
-		slog.String("correlation_id", correlationID),
-		slog.Int("retry_count", retryCount),
+	observability.PrintStep("PROCESS", "payment-service", "processing_event",
+		"event_type", eventType,
+		"event_id", eventID,
+		"correlation_id", correlationID,
+		"retry_count", fmt.Sprintf("%d", retryCount),
 	)
 
 	switch envelope.EventType {
@@ -194,11 +196,15 @@ func (c *OrderConsumer) handleOrderCreated(ctx context.Context, envelope events.
 		return fmt.Errorf("publish payment event: %w", err)
 	}
 
-	c.logger.Info("payment event published",
-		slog.String("event_type", resultEnvelope.EventType),
-		slog.String("event_id", resultEnvelope.EventID),
-		slog.String("topic", resultTopic),
-		slog.String("order_id", orderData.OrderID),
+	observability.PrintStep("PRODUCE", "payment-service", "payment_event_published",
+		"event_type", resultEnvelope.EventType,
+		"event_id", resultEnvelope.EventID,
+		"topic", resultTopic,
+		"order_id", orderData.OrderID,
+		"customer_id", orderData.CustomerID,
+		"amount", fmt.Sprintf("%.2f", payment.Amount),
+		"status", string(payment.Status),
+		"flow", "payment-service → payments.v1 → notification-service",
 	)
 
 	return nil
@@ -249,14 +255,14 @@ func (c *OrderConsumer) sendToDLT(ctx context.Context, envelope events.Envelope,
 		CausationID:   envelope.CausationID,
 		Producer:      events.ProducerPaymentService,
 		Data: map[string]any{
-			"original_topic":  msg.Topic,
-			"partition":       msg.Partition,
-			"offset":          msg.Offset,
-			"event_id":        envelope.EventID,
-			"error":           processingErr.Error(),
-			"retry_count":     retryCount,
+			"original_topic":   msg.Topic,
+			"partition":        msg.Partition,
+			"offset":           msg.Offset,
+			"event_id":         envelope.EventID,
+			"error":            processingErr.Error(),
+			"retry_count":      retryCount,
 			"original_payload": string(msg.Value),
-			"timestamp":       time.Now().UTC(),
+			"timestamp":        time.Now().UTC(),
 		},
 	}
 
@@ -264,12 +270,13 @@ func (c *OrderConsumer) sendToDLT(ctx context.Context, envelope events.Envelope,
 }
 
 func (c *OrderConsumer) logMessageReceived(msg kafkago.Message) {
-	c.logger.Info("message received",
-		slog.String("topic", msg.Topic),
-		slog.Int("partition", msg.Partition),
-		slog.Int64("offset", msg.Offset),
-		slog.String("key", string(msg.Key)),
-		slog.String("group", c.reader.Config().GroupID),
+	observability.PrintStep("CONSUME", "payment-service", "message_received",
+		"topic", msg.Topic,
+		"partition", fmt.Sprintf("%d", msg.Partition),
+		"offset", fmt.Sprintf("%d", msg.Offset),
+		"key", string(msg.Key),
+		"group", c.reader.Config().GroupID,
+		"flow", "orders.v1 → payment-service",
 	)
 }
 

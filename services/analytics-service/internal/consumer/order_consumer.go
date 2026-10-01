@@ -3,6 +3,7 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -10,13 +11,14 @@ import (
 
 	"github.com/banna/kafka-microservices/pkg/events"
 	kafkapkg "github.com/banna/kafka-microservices/pkg/kafka"
+	"github.com/banna/kafka-microservices/pkg/observability"
 	"github.com/banna/kafka-microservices/services/analytics-service/internal/transformer"
 )
 
 type OrderConsumer struct {
-	reader    *kafkago.Reader
-	writer    *kafkago.Writer
-	logger    *slog.Logger
+	reader *kafkago.Reader
+	writer *kafkago.Writer
+	logger *slog.Logger
 }
 
 func NewOrderConsumer(
@@ -54,13 +56,14 @@ func (c *OrderConsumer) Start(ctx context.Context) {
 				continue
 			}
 
-			c.logger.Info("message received",
-				slog.String("topic", msg.Topic),
-				slog.Int("partition", msg.Partition),
-				slog.Int64("offset", msg.Offset),
-				slog.String("key", string(msg.Key)),
-				slog.String("group", c.reader.Config().GroupID),
-			)
+		observability.PrintStep("CONSUME", "analytics-service", "message_received",
+			"topic", msg.Topic,
+			"partition", fmt.Sprintf("%d", msg.Partition),
+			"offset", fmt.Sprintf("%d", msg.Offset),
+			"key", string(msg.Key),
+			"group", c.reader.Config().GroupID,
+			"flow", "orders.v1 → analytics-service (NO DB)",
+		)
 
 			if err := c.handleMessage(ctx, msg); err != nil {
 				c.logger.Error("message processing failed",
@@ -77,13 +80,14 @@ func (c *OrderConsumer) Start(ctx context.Context) {
 					slog.String("error", err.Error()),
 					slog.Int64("offset", msg.Offset),
 				)
-			} else {
-				c.logger.Info("offset committed",
-					slog.String("topic", msg.Topic),
-					slog.Int("partition", msg.Partition),
-					slog.Int64("offset", msg.Offset),
-				)
-			}
+		} else {
+			observability.PrintStep("CONSUME", "analytics-service", "offset_committed",
+				"topic", msg.Topic,
+				"partition", fmt.Sprintf("%d", msg.Partition),
+				"offset", fmt.Sprintf("%d", msg.Offset),
+				"status", "SUCCESS",
+			)
+		}
 		}
 	}
 }
@@ -98,10 +102,10 @@ func (c *OrderConsumer) handleMessage(ctx context.Context, msg kafkago.Message) 
 	eventID := c.getHeader(msg, "event_id")
 	correlationID := c.getHeader(msg, "correlation_id")
 
-	c.logger.Info("processing event",
-		slog.String("event_type", envelope.EventType),
-		slog.String("event_id", eventID),
-		slog.String("correlation_id", correlationID),
+	observability.PrintStep("PROCESS", "analytics-service", "processing_event",
+		"event_type", envelope.EventType,
+		"event_id", eventID,
+		"correlation_id", correlationID,
 	)
 
 	switch envelope.EventType {
@@ -145,14 +149,16 @@ func (c *OrderConsumer) handleOrderCreated(ctx context.Context, envelope events.
 		return err
 	}
 
-	c.logger.Info("analytics event published (NO DB - pure Kafka)",
-		slog.String("event_type", analyticsEvent.EventType),
-		slog.String("event_id", analyticsEvent.EventID),
-		slog.String("order_id", analyticsEvent.OrderID),
-		slog.String("customer_id", analyticsEvent.CustomerID),
-		slog.Float64("total_amount", analyticsEvent.TotalAmount),
-		slog.Int("item_count", analyticsEvent.ItemCount),
-		slog.String("topic", kafkapkg.TopicAnalytics),
+	observability.PrintStep("PRODUCE", "analytics-service", "analytics_event_published",
+		"event_type", analyticsEvent.EventType,
+		"event_id", analyticsEvent.EventID,
+		"order_id", analyticsEvent.OrderID,
+		"customer_id", analyticsEvent.CustomerID,
+		"total_amount", fmt.Sprintf("%.2f", analyticsEvent.TotalAmount),
+		"item_count", fmt.Sprintf("%d", analyticsEvent.ItemCount),
+		"topic", kafkapkg.TopicAnalytics,
+		"note", "NO DATABASE - pure Kafka flow",
+		"flow", "analytics-service → analytics.v1",
 	)
 
 	return nil

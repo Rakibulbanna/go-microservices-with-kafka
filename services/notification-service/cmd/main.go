@@ -51,7 +51,7 @@ func main() {
 		MinBytes:      10e3,
 		MaxBytes:      10e6,
 		MaxWait:       5 * time.Second,
-		StartOffset:   -1,
+		StartOffset:   -2,
 		RetentionTime: time.Hour * 24,
 	})
 	defer ordersReader.Close()
@@ -63,7 +63,7 @@ func main() {
 		MinBytes:      10e3,
 		MaxBytes:      10e6,
 		MaxWait:       5 * time.Second,
-		StartOffset:   -1,
+		StartOffset:   -2,
 		RetentionTime: time.Hour * 24,
 	})
 	defer paymentsReader.Close()

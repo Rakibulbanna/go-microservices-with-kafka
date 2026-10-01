@@ -10,6 +10,7 @@ import (
 
 	"github.com/banna/kafka-microservices/pkg/events"
 	kafkapkg "github.com/banna/kafka-microservices/pkg/kafka"
+	"github.com/banna/kafka-microservices/pkg/observability"
 	"github.com/banna/kafka-microservices/services/order-service/internal/repository"
 )
 
@@ -86,12 +87,6 @@ func (p *Publisher) publishPending(ctx context.Context) {
 			)
 			continue
 		}
-
-		p.logger.Info("outbox event published",
-			slog.String("event_id", evt.ID),
-			slog.String("event_type", evt.EventType),
-			slog.String("aggregate_id", evt.AggregateID),
-		)
 	}
 }
 
@@ -102,6 +97,13 @@ func (p *Publisher) publishEvent(ctx context.Context, evt repository.OutboxEvent
 	}
 
 	topic := kafkapkg.TopicOrders
+
+	observability.PrintStep("PRODUCE", "order-service", "outbox_event_published",
+		"event_id", evt.ID,
+		"event_type", evt.EventType,
+		"topic", topic,
+		"flow", "order-service → orders.v1 → [payment, notification, analytics]",
+	)
 
 	return kafkapkg.PublishEvent(ctx, p.writer, topic, evt.AggregateID, envelope)
 }

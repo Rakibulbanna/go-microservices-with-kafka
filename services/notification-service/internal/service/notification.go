@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/banna/kafka-microservices/pkg/observability"
 	"github.com/banna/kafka-microservices/services/notification-service/internal/model"
 	"github.com/banna/kafka-microservices/services/notification-service/internal/repository"
 )
@@ -51,12 +52,14 @@ func (s *NotificationService) SendOrderCreatedNotification(ctx context.Context, 
 		return fmt.Errorf("create notification: %w", err)
 	}
 
-	s.logger.Info("notification sent (simulated)",
-		slog.String("notification_id", notification.ID),
-		slog.String("event_id", eventID),
-		slog.String("order_id", orderID),
-		slog.String("type", string(notification.Type)),
-		slog.String("message", notification.Message),
+	observability.PrintStep("COMPLETE", "notification-service", "notification_sent",
+		"notification_id", notification.ID,
+		"event_id", eventID,
+		"order_id", orderID,
+		"customer_id", customerID,
+		"type", string(notification.Type),
+		"message", notification.Message,
+		"status", "SUCCESS",
 	)
 
 	return nil
@@ -89,12 +92,15 @@ func (s *NotificationService) SendPaymentCompletedNotification(ctx context.Conte
 		return fmt.Errorf("create notification: %w", err)
 	}
 
-	s.logger.Info("notification sent (simulated)",
-		slog.String("notification_id", notification.ID),
-		slog.String("event_id", eventID),
-		slog.String("order_id", orderID),
-		slog.String("type", string(notification.Type)),
-		slog.String("message", notification.Message),
+	observability.PrintStep("COMPLETE", "notification-service", "notification_sent",
+		"notification_id", notification.ID,
+		"event_id", eventID,
+		"order_id", orderID,
+		"customer_id", customerID,
+		"amount", fmt.Sprintf("%.2f", amount),
+		"type", string(notification.Type),
+		"message", notification.Message,
+		"status", "SUCCESS",
 	)
 
 	return nil
@@ -127,12 +133,15 @@ func (s *NotificationService) SendPaymentFailedNotification(ctx context.Context,
 		return fmt.Errorf("create notification: %w", err)
 	}
 
-	s.logger.Info("notification sent (simulated)",
-		slog.String("notification_id", notification.ID),
-		slog.String("event_id", eventID),
-		slog.String("order_id", orderID),
-		slog.String("type", string(notification.Type)),
-		slog.String("message", notification.Message),
+	observability.PrintStep("COMPLETE", "notification-service", "notification_sent",
+		"notification_id", notification.ID,
+		"event_id", eventID,
+		"order_id", orderID,
+		"customer_id", customerID,
+		"reason", reason,
+		"type", string(notification.Type),
+		"message", notification.Message,
+		"status", "SUCCESS",
 	)
 
 	return nil
