@@ -57,3 +57,6 @@ coverage.html
 # Debug
 debug
 debug.test
+
+docs/
+*.md
