@@ -32,5 +32,8 @@ $KAFKA_BIN/kafka-topics.sh --bootstrap-server $BOOTSTRAP_SERVER --create --if-no
 $KAFKA_BIN/kafka-topics.sh --bootstrap-server $BOOTSTRAP_SERVER --create --if-not-exists \
   --topic payments.dlt.v1 --partitions 3 --replication-factor 1
 
+kafka-topics.sh --bootstrap-server $BOOTSTRAP_SERVER --create --if-not-exists \
+  --topic analytics.v1 --partitions 3 --replication-factor 1
+
 echo "Topics created successfully!"
 $KAFKA_BIN/kafka-topics.sh --bootstrap-server $BOOTSTRAP_SERVER --list

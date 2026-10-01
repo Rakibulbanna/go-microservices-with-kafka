@@ -6,12 +6,14 @@ const (
 	EventTypePaymentCompleted = "payment.completed"
 	EventTypePaymentFailed  = "payment.failed"
 	EventTypeNotificationSent = "notification.sent"
+	EventTypeOrderAnalytics = "order.analytics"
 )
 
 const (
 	ProducerOrderService      = "order-service"
 	ProducerPaymentService    = "payment-service"
 	ProducerNotificationService = "notification-service"
+	ProducerAnalyticsService  = "analytics-service"
 )
 
 const (

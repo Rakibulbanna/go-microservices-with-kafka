@@ -4,6 +4,7 @@ const (
 	TopicOrders         = "orders.v1"
 	TopicPayments       = "payments.v1"
 	TopicNotifications  = "notifications.v1"
+	TopicAnalytics      = "analytics.v1"
 	TopicOrdersRetry    = "orders.retry.v1"
 	TopicOrdersDLT      = "orders.dlt.v1"
 	TopicPaymentsRetry  = "payments.retry.v1"

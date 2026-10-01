@@ -1,6 +1,5 @@
 .PHONY: up down logs build test lint topics clean restart \
-       order payment notification \
-       cluster-up cluster-down \
+       order payment notification analytics \
        order-test payment-test notification-test
 
 up:
@@ -16,11 +15,13 @@ build:
 	cd services/order-service && go build -o ../../bin/order-service ./cmd/
 	cd services/payment-service && go build -o ../../bin/payment-service ./cmd/
 	cd services/notification-service && go build -o ../../bin/notification-service ./cmd/
+	cd services/analytics-service && go build -o ../../bin/analytics-service ./cmd/
 
 test:
 	cd services/order-service && go test ./...
 	cd services/payment-service && go test ./...
 	cd services/notification-service && go test ./...
+	cd services/analytics-service && go test ./...
 
 lint:
 	cd services/order-service && golangci-lint run ./...
@@ -54,6 +55,9 @@ payment:
 
 notification:
 	cd services/notification-service && ~/go/bin/air
+
+analytics:
+	cd services/analytics-service && ~/go/bin/air
 
 cluster-up:
 	docker compose -f docker-compose.cluster.yml up -d
